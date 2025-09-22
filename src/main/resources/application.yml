@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: keycloak
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak: # ???????? provider
+            issuer-uri: http://localhost:8180/realms/myrealm
+            # ?????????? token-uri, authorization-uri ??? Spring ????????? issuer-uri
+        registration:
+          keycloak: # ???? registration ?????????????? provider ??????
+            provider: keycloak
+            client-id: mywebapp # Client ID ????????? Keycloak
+            client-secret: Y1qpv8u6YtcAP8CAANyYbhU9bipuARn9 # Client Secret ??? Keycloak
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile, email, roles # scope ?????????????
+            post-logout-redirect-uri: "{baseUrl}"
+
+      # === ?????????????? Resource Server (?????? REST APIs) ===
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/myrealm
+
+logging:
+  level:
+    org:
+      springframework:
+        security=DEBUG:

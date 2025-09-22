@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Profile</title>
+    <style>
+        .role-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 4px 8px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 5px;
+        }
+        .role-badge.admin {
+             background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<h1>User Profile</h1>
+<p>Username: <span id="username"></span></p>
+<p>Email: <span id="email"></span></p>
+
+<div>
+    <strong>Roles:</strong>
+    <span id="roles"></span>
+</div>
+
+<br/>
+<form th:action="@{/logout}" method="post">
+    <button type="submit">Logout</button>
+</form>
+
+<script>
+    fetch('/api/profile')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('username').textContent = data.username;
+            document.getElementById('email').textContent = data.email;
+            const rolesContainer = document.getElementById('roles');
+            data.roles.forEach(role => {
+                const roleBadge = document.createElement('span');
+                roleBadge.textContent = role;
+                roleBadge.classList.add('role-badge');
+                if (role.toLowerCase() === 'admin') {
+                    roleBadge.classList.add('admin');
+                }
+                rolesContainer.appendChild(roleBadge);
+            });
+        });
+</script>
+</body>
+</html>
