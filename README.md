@@ -1,4 +1,4 @@
-# GEMINI.md
+# Spring-Boot Keycloak Integration Demo
 
 ## Project Overview
 
