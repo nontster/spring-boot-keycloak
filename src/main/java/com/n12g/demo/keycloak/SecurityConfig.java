@@ -1,6 +1,7 @@
 package com.n12g.demo.keycloak;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -8,7 +9,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.HashSet;
@@ -25,13 +24,16 @@ import java.util.Set;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
 
-    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
-    private String keycloakClientId;
-
+    private final JwtAuthConverter jwtAuthConverter; // For Resource Server
+    private final OidcUserAuthorityMapper oidcUserAuthorityMapper; // For OAuth2 Login
     private final ClientRegistrationRepository clientRegistrationRepository;
 
-    public SecurityConfig(ClientRegistrationRepository clientRegistrationRepository) {
+    // ADD THIS EXPLICIT CONSTRUCTOR
+    public SecurityConfig(JwtAuthConverter jwtAuthConverter, OidcUserAuthorityMapper oidcUserAuthorityMapper, ClientRegistrationRepository clientRegistrationRepository) {
+        this.jwtAuthConverter = jwtAuthConverter;
+        this.oidcUserAuthorityMapper = oidcUserAuthorityMapper;
         this.clientRegistrationRepository = clientRegistrationRepository;
     }
 
@@ -41,10 +43,46 @@ public class SecurityConfig {
         return successHandler;
     }
 
-    private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter(keycloakClientId));
-        return converter;
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated() // All other UI endpoints
+        );
+        // Configure OAuth2 Resource Server for API
+        http
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.disable()); // Configure OAuth2 Login for UI
+
+
+        return http.build();
+    }
+
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/profile").hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(this.oidcUserService())
+                        )
+                )
+                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler())
+                );
+
+        return http.build();
     }
 
     @Bean
@@ -53,56 +91,10 @@ public class SecurityConfig {
 
         return (userRequest) -> {
             OidcUser oidcUser = delegate.loadUser(userRequest);
-
-            Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-            mappedAuthorities.addAll(oidcUser.getAuthorities());
-
-            OidcUserAuthorityMapper roleMapper = new OidcUserAuthorityMapper(keycloakClientId);
-            mappedAuthorities.addAll(roleMapper.mapAuthorities(oidcUser.getAuthorities()));
+            Set<GrantedAuthority> mappedAuthorities = new HashSet<>(oidcUser.getAuthorities());
+            mappedAuthorities.addAll(oidcUserAuthorityMapper.mapAuthorities(oidcUser.getAuthorities()));
 
             return new DefaultOidcUser(mappedAuthorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
-    }
-
-    @Bean
-    public GrantedAuthoritiesMapper oidcUserAuthorityMapper() {
-        return new OidcUserAuthorityMapper(keycloakClientId);
-    }
-
-    @Bean
-    @Order(1)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/api/**")
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/user/**").hasRole("USER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .csrf(csrf -> csrf.disable());
-
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/").permitAll()
-                        //.requestMatchers("/profile").hasAnyRole("USER", "ADMIN") // หน้า /profile ต้องมี Role USER หรือ ADMIN
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.oidcUserService(this.oidcUserService()))
-                )
-                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler())
-                );
-
-        return http.build();
     }
 }

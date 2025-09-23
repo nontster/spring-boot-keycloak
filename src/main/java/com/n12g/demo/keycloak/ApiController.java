@@ -1,5 +1,7 @@
 package com.n12g.demo.keycloak;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -7,6 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class ApiController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApiController.class);
+
     @GetMapping("/user/data")
     public String getUserData() {
         return "This is user data, accessible by USER role.";
