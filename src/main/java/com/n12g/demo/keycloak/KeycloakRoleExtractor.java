@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This class provides a utility method for extracting roles from a JWT claims map.
+ * It can extract both realm roles and client-specific roles.
+ */
 public class KeycloakRoleExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(KeycloakRoleExtractor.class);
 
@@ -23,6 +27,7 @@ public class KeycloakRoleExtractor {
      * Extracts roles from the JWT claims map.
      *
      * @param claims The claims map from the JWT.
+     * @param resourceClientId The client ID of the resource.
      * @return A collection of GrantedAuthority objects.
      */
     public static Collection<GrantedAuthority> extractResourceRoles(Map<String, Object> claims, String resourceClientId) {
@@ -47,6 +52,12 @@ public class KeycloakRoleExtractor {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Extracts roles from a specific path in the claims map.
+     * @param claims The claims map.
+     * @param path The path to the roles.
+     * @return A stream of roles.
+     */
     @SuppressWarnings("unchecked")
     private static Stream<String> extractRolesFromPath(Map<String, Object> claims, String path) {
         if (path == null || path.isEmpty()) {

@@ -17,6 +17,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This class is a converter that extracts the authorities from a JWT.
+ * It combines the default scope-based authorities with custom roles extracted from the JWT.
+ */
 @Component
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthConverter.class);
@@ -27,6 +31,12 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
     private String resourceId; // e.g., your client-id in Keycloak
 
+    /**
+     * This method converts a JWT to an AbstractAuthenticationToken.
+     * It extracts the authorities from the JWT and combines them with the default scope-based authorities.
+     * @param jwt The JWT to convert.
+     * @return The converted AbstractAuthenticationToken.
+     */
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
         // Use our central extractor to get custom roles
@@ -41,6 +51,12 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         return new JwtAuthenticationToken(jwt, allAuthorities, getPrincipalClaimName(jwt));
     }
 
+    /**
+     * This method gets the principal claim name from the JWT.
+     * It uses the "preferred_username" claim as the principal claim name.
+     * @param jwt The JWT.
+     * @return The principal claim name.
+     */
     private String getPrincipalClaimName(Jwt jwt) {
         // Use "sub" or a custom claim like "preferred_username"
         return jwt.getClaim("preferred_username");

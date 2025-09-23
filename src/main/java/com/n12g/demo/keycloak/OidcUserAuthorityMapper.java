@@ -12,6 +12,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * This class maps the authorities from the OIDC user to Spring Security authorities.
+ * It extracts the roles from the OIDC user's claims and adds them to the set of authorities.
+ */
 @Component
 public class OidcUserAuthorityMapper implements GrantedAuthoritiesMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(OidcUserAuthorityMapper.class);
@@ -19,6 +23,12 @@ public class OidcUserAuthorityMapper implements GrantedAuthoritiesMapper {
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
     private String resourceId;
 
+    /**
+     * This method maps the authorities from the OIDC user to Spring Security authorities.
+     * It extracts the roles from the OIDC user's claims and adds them to the set of authorities.
+     * @param authorities The authorities from the OIDC user.
+     * @return The mapped authorities.
+     */
     @Override
     public Collection<? extends GrantedAuthority> mapAuthorities(Collection<? extends GrantedAuthority> authorities) {
         Set<GrantedAuthority> mappedAuthorities = new HashSet<>();

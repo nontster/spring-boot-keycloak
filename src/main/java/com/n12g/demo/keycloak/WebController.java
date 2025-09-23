@@ -11,19 +11,32 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.stream.Collectors;
 
+/**
+ * This is a controller that handles the web UI.
+ * It provides two endpoints:
+ * - /: the home page
+ * - /profile: the user profile page
+ */
 @Controller
 public class WebController {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebController.class);
 
+    /**
+     * This endpoint returns the home page.
+     * @return The name of the view to render.
+     */
     @GetMapping("/")
     public String getIndex() {
         return "index"; // templates/index.html
     }
 
-    // @AuthenticationPrincipal annotation tells Spring Security to inject the currently authenticated
-    // user's principal into this method. Using the user object, we can retrieve information about the
-    // logged on user. In this example, we retrieve the username of the user and his or her email address
-    // and roles. We put those as attributes in the Model so we can display them in our Thymeleaf template
+    /**
+     * This endpoint returns the user profile page.
+     * It retrieves the user's information from the OIDC principal and adds it to the model.
+     * @param model The model to add the user's information to.
+     * @param principal The OIDC principal of the authenticated user.
+     * @return The name of the view to render.
+     */
     @GetMapping("/profile")
     public String getProfile(Model model, @AuthenticationPrincipal OidcUser principal) {
 
