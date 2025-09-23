@@ -17,15 +17,4 @@ public class ApiController {
         return "This is admin data, accessible by ADMIN role.";
     }
 
-    @GetMapping("/profile")
-    public java.util.Map<String, Object> getProfile(@org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.core.oidc.user.OidcUser principal) {
-        java.util.Map<String, Object> profile = new java.util.HashMap<>();
-        profile.put("username", principal.getAttribute("preferred_username"));
-        profile.put("email", principal.getAttribute("email"));
-        profile.put("roles", principal.getAuthorities().stream()
-                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
-                .map(role -> role.replace("ROLE_", ""))
-                .collect(java.util.stream.Collectors.toList()));
-        return profile;
-    }
 }

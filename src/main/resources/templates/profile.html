@@ -19,12 +19,16 @@
 </head>
 <body>
 <h1>User Profile</h1>
-<p>Username: <span id="username"></span></p>
-<p>Email: <span id="email"></span></p>
+<p>Username: <span id="username" th:text="${username}"></span></p>
+<p>Email: <span id="email" th:text="${email}"></span></p>
 
 <div>
     <strong>Roles:</strong>
-    <span id="roles"></span>
+    <span id="roles">
+        <span th:each="role : ${roles}" th:text="${role}"
+              th:classappend="${role.toLowerCase() == 'admin' ? 'admin' : ''}"
+              class="role-badge"></span>
+    </span>
 </div>
 
 <br/>
@@ -32,23 +36,5 @@
     <button type="submit">Logout</button>
 </form>
 
-<script>
-    fetch('/api/profile')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('username').textContent = data.username;
-            document.getElementById('email').textContent = data.email;
-            const rolesContainer = document.getElementById('roles');
-            data.roles.forEach(role => {
-                const roleBadge = document.createElement('span');
-                roleBadge.textContent = role;
-                roleBadge.classList.add('role-badge');
-                if (role.toLowerCase() === 'admin') {
-                    roleBadge.classList.add('admin');
-                }
-                rolesContainer.appendChild(roleBadge);
-            });
-        });
-</script>
 </body>
 </html>
