@@ -1,5 +1,8 @@
 package com.n12g.demo.keycloak;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -18,17 +21,15 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
- * This class provides the security configuration for the application.
- * It defines the security filter chains for both the API and the web UI.
- * It also configures the OAuth2 login and resource server.
+ * This class provides the security configuration for the application. It
+ * defines the security filter chains for both the API and the web UI. It also
+ * configures the OAuth2 login and resource server.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtAuthConverter jwtAuthConverter; // For Resource Server
@@ -37,6 +38,7 @@ public class SecurityConfig {
 
     /**
      * This constructor injects the required dependencies.
+     *
      * @param jwtAuthConverter The JWT authentication converter.
      * @param oidcUserAuthorityMapper The OIDC user authority mapper.
      * @param clientRegistrationRepository The client registration repository.
@@ -48,8 +50,9 @@ public class SecurityConfig {
     }
 
     /**
-     * This method configures the OIDC logout success handler.
-     * It sets the post-logout redirect URI to the base URL.
+     * This method configures the OIDC logout success handler. It sets the
+     * post-logout redirect URI to the base URL.
+     *
      * @return The OIDC client-initiated logout success handler.
      */
     private OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler() {
@@ -59,9 +62,10 @@ public class SecurityConfig {
     }
 
     /**
-     * This method configures the security filter chain for the API.
-     * It secures all endpoints under /api/** and requires the USER or ADMIN role.
-     * It also configures the OAuth2 resource server to use JWT authentication.
+     * This method configures the security filter chain for the API. It secures
+     * all endpoints under /api/** and requires the USER or ADMIN role. It also
+     * configures the OAuth2 resource server to use JWT authentication.
+     *
      * @param http The HTTP security object.
      * @return The security filter chain for the API.
      * @throws Exception If an error occurs.
@@ -72,26 +76,26 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
-                        .anyRequest().authenticated() // All other UI endpoints
-        );
+                .requestMatchers("/api/user/**").hasRole("USER")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+                );
         // Configure OAuth2 Resource Server for API
         http
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter))
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable()); // Configure OAuth2 Login for UI
 
-
         return http.build();
     }
 
-
     /**
-     * This method configures the security filter chain for the web UI.
-     * It secures the /profile endpoint and requires the USER or ADMIN role.
-     * It also configures the OAuth2 login with a custom OIDC user service.
+     * This method configures the security filter chain for the web UI. It
+     * secures the /profile endpoint and requires the USER or ADMIN role. It
+     * also configures the OAuth2 login with a custom OIDC user service.
+     *
      * @param http The HTTP security object.
      * @return The security filter chain for the web UI.
      * @throws Exception If an error occurs.
@@ -101,14 +105,14 @@ public class SecurityConfig {
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/profile").hasAnyRole("USER", "ADMIN")
-                        .anyRequest().authenticated()
+                .requestMatchers("/").permitAll()
+                .requestMatchers("/profile").hasAnyRole("USER", "ADMIN")
+                .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(this.oidcUserService())
-                        )
+                .userInfoEndpoint(userInfo -> userInfo
+                .oidcUserService(this.oidcUserService())
+                )
                 )
                 .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler())
                 );
@@ -117,8 +121,9 @@ public class SecurityConfig {
     }
 
     /**
-     * This method provides a custom OIDC user service.
-     * It maps the authorities from the OIDC user to Spring Security authorities.
+     * This method provides a custom OIDC user service. It maps the authorities
+     * from the OIDC user to Spring Security authorities.
+     *
      * @return The custom OIDC user service.
      */
     @Bean
