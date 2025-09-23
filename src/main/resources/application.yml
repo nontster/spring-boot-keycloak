@@ -1,30 +1,43 @@
 spring:
   application:
-    name: keycloak
+    name: keycloak # Sets the name of the Spring Boot application.
   security:
     oauth2:
       client:
         provider:
-          keycloak: # ???????? provider
+          keycloak:
+            # The URI of the OpenID Connect provider (Keycloak).
+            # Spring Security will use this to discover the provider's endpoints (e.g., authorization, token, userinfo).
             issuer-uri: http://localhost:8180/realms/myrealm
-            # ?????????? token-uri, authorization-uri ??? Spring ????????? issuer-uri
         registration:
-          keycloak: # ???? registration ?????????????? provider ??????
-            provider: keycloak
-            client-id: mywebapp # Client ID ????????? Keycloak
-            client-secret: Y1qpv8u6YtcAP8CAANyYbhU9bipuARn9 # Client Secret ??? Keycloak
-            authorization-grant-type: authorization_code
+          keycloak: # A custom name for the client registration.
+            provider: keycloak # Refers to the provider configured above.
+            client-id: mywebapp # The ID of the client registered in Keycloak.
+            client-secret: Y1qpv8u6YtcAP8CAANyYbhU9bipuARn9 # The secret of the client registered in Keycloak.
+            authorization-grant-type: authorization_code # The OAuth 2.0 grant type to use for authentication.
+            # The URI where the user will be redirected after a successful login with Keycloak.
+            # {baseUrl} is a placeholder for the application's base URL.
+            # {registrationId} is a placeholder for the client registration ID (in this case, "keycloak").
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid, profile, email, roles # scope ?????????????
+            # The scopes to request from the OpenID Connect provider.
+            # 'openid' is required for OpenID Connect.
+            # 'profile' and 'email' are for user information.
+            # 'roles' is a custom scope to get the user's roles.
+            scope: openid, profile, email, roles
+            # The URI where the user will be redirected after a successful logout from Keycloak.
             post-logout-redirect-uri: "{baseUrl}"
 
-      # === ?????????????? Resource Server (?????? REST APIs) ===
       resourceserver:
         jwt:
+          # The URI of the JWT issuer (Keycloak).
+          # The resource server will use this to validate the 'iss' claim in the JWT.
           issuer-uri: http://localhost:8180/realms/myrealm
 
 logging:
   level:
+    root: INFO
     org:
       springframework:
-        security=DEBUG:
+        # Sets the logging level for Spring Security to DEBUG.
+        # This is useful for troubleshooting security-related issues.
+        security: DEBUG

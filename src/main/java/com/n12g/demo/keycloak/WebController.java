@@ -27,6 +27,7 @@ public class WebController {
      */
     @GetMapping("/")
     public String getIndex() {
+        LOGGER.info("Index endpoint accessed.");
         return "index"; // templates/index.html
     }
 
@@ -40,7 +41,7 @@ public class WebController {
     @GetMapping("/profile")
     public String getProfile(Model model, @AuthenticationPrincipal OidcUser principal) {
 
-        LOGGER.info(principal.getIdToken().getClaims().toString());
+        LOGGER.debug(principal.getIdToken().getClaims().toString());
 
         model.addAttribute("username", principal.getAttribute("preferred_username"));
         model.addAttribute("email", principal.getAttribute("email"));

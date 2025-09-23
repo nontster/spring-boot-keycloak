@@ -22,6 +22,7 @@ public class ApiController {
      */
     @GetMapping("/user/data")
     public String getUserData() {
+        LOGGER.info("User data endpoint accessed.");
         return "This is user data, accessible by USER role.";
     }
 
@@ -31,6 +32,7 @@ public class ApiController {
      */
     @GetMapping("/admin/data")
     public String getAdminData() {
+        LOGGER.info("Admin data endpoint accessed.");
         return "This is admin data, accessible by ADMIN role.";
     }
 
