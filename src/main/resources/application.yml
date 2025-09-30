@@ -10,10 +10,12 @@ spring:
             # Spring Security will use this to discover the provider's endpoints (e.g., authorization, token, userinfo).
             issuer-uri: http://localhost:8180/realms/myrealm
         registration:
-          keycloak: # A custom name for the client registration.
+          keycloak:
+            # A custom name for the client registration.
             provider: keycloak # Refers to the provider configured above.
             client-id: mywebapp # The ID of the client registered in Keycloak.
             client-secret: Y1qpv8u6YtcAP8CAANyYbhU9bipuARn9 # The secret of the client registered in Keycloak.
+            # PKCE is enabled by default for 'authorization_code' grant type, even for confidential clients.
             authorization-grant-type: authorization_code # The OAuth 2.0 grant type to use for authentication.
             # The URI where the user will be redirected after a successful login with Keycloak.
             # {baseUrl} is a placeholder for the application's base URL.
@@ -23,7 +25,7 @@ spring:
             # 'openid' is required for OpenID Connect.
             # 'profile' and 'email' are for user information.
             # 'roles' is a custom scope to get the user's roles.
-            scope: openid, profile, email, roles
+            scope: openid, profile, email
             # The URI where the user will be redirected after a successful logout from Keycloak.
             post-logout-redirect-uri: "{baseUrl}"
 

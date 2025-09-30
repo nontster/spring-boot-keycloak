@@ -31,6 +31,13 @@
     </span>
 </div>
 
+<h2>Claims</h2>
+<ul>
+    <li th:each="claim : ${claims}">
+        <strong th:text="${claim.key}"></strong>: <span th:text="${claim.value}"></span>
+    </li>
+</ul>
+
 <br/>
 <form th:action="@{/logout}" method="post">
     <button type="submit">Logout</button>

@@ -2,6 +2,7 @@ package com.n12g.demo.keycloak;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +12,21 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 
 /**
  * This class provides the security configuration for the application. It
@@ -112,7 +119,11 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
                 .oidcUserService(this.oidcUserService())
-                )
+                ).authorizationEndpoint(authorization -> authorization
+                                        .authorizationRequestResolver(
+                                                pkceResolver(this.clientRegistrationRepository)
+                                        )
+                                )
                 )
                 .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler())
                 );
@@ -137,5 +148,18 @@ public class SecurityConfig {
 
             return new DefaultOidcUser(mappedAuthorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
+    }
+
+    private OAuth2AuthorizationRequestResolver pkceResolver(ClientRegistrationRepository repo) {
+        var resolver = new DefaultOAuth2AuthorizationRequestResolver(repo,
+                "/oauth2/authorization");
+        resolver.setAuthorizationRequestCustomizer(pkceCustomizer());
+        return resolver;
+    }
+
+    private Consumer<OAuth2AuthorizationRequest.Builder> pkceCustomizer() {
+        return customizer -> customizer.attributes(attrs -> {
+            attrs.put("pkce", true);
+        });
     }
 }

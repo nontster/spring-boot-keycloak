@@ -49,6 +49,7 @@ public class WebController {
                 .map(GrantedAuthority::getAuthority)
                 .map(role -> role.replace("ROLE_", ""))
                 .collect(Collectors.toList()));
+        model.addAttribute("claims", principal.getClaims());
         return "profile"; // templates/profile.html
     }
 }
